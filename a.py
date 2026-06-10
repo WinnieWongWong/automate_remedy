@@ -15,13 +15,13 @@ import sys
 DEBUGGER_PORT = 9222
 
 MAIN_URL_PREFIX = "https://localhost:43446/arsys/forms/argrp/SHR"
-VIEW_URL_PREFIX = "https://localhost:43446/arsys/forms/argrp/EGIS_CLP_SRMaster_ViewDetail"
+VIEW_URL_PREFIX = "https://localhost:43446/arsys/forms/argrp/GCIS_SSP_SRMaster_ViewDetail"
 
 BASE_SAVE_PATH = Path("C:/remedy/2024/202409")
 DOWNLOADS_PATH = Path("C:/Users/user/Downloads")
 
-KP_EXCEL_TEMPLATE = Path("C:/remedy/default/excel_file/CRQ000020241107_PROJ_PRD.xlsx")
-TT_EXCEL_TEMPLATE = Path("C:/remedy/default/excel_file/CRQ000020241107_PROJ_TT.xlsx")
+KP_EXCEL_TEMPLATE = Path("C:/remedy/default/excel_file/CRQ000020260325_PROJ_PRD.xlsx")
+TT_EXCEL_TEMPLATE = Path("C:/remedy/default/excel_file/CRQ000020260325_PROJ_TT.xlsx")
 # ============================================================
 
 def get_chrome_tabs(port=DEBUGGER_PORT):
@@ -89,7 +89,7 @@ def get_textarea_value(cr_value):
         changeIDtextarea.clear()
         changeIDtextarea.send_keys(cr_value)
 
-        searchBtn = driver.find_element(By.XPATH, "//a[div/div[text()='Search']]")
+        searchBtn = driver.find_element(By.XPATH, "//a[@ardbn='Query' or contains(@class, 'ardbnQuery')]")
         driver.execute_script("arguments[0].click();", searchBtn)
         time.sleep(3)
 
@@ -100,7 +100,7 @@ def get_textarea_value(cr_value):
         projectEnvText = driver.find_element(By.XPATH, "//label[text()='Site*']/following-sibling::textarea").get_attribute("value")
 
         # Click View button
-        view_btn = driver.find_element(By.XPATH, "//a[.//div[text()='View']]")
+        view_btn = driver.find_element(By.XPATH, "//a[@ardbn='cBtn_EGISViewSR' and .//div[text()='View']]")  
         view_btn.click()
         time.sleep(5)
 
@@ -110,7 +110,7 @@ def get_textarea_value(cr_value):
 
         # Fallback: scrape Notes from table if empty
         if not projectRRText.strip():
-            td_elements = view_driver.find_elements(By.XPATH, "//div[@id='WIN_0_536871031']//table//tr//td")
+            td_elements = view_driver.find_elements(By.XPATH, "//textarea[@id='arid_WIN_4_1000000151']")
             projectRRText = "\n".join(td.text for td in td_elements if td.text.strip())
 
         # Create folder and save r.txt
@@ -137,7 +137,7 @@ def get_textarea_value(cr_value):
         # Download attachments
         files_before = set(DOWNLOADS_PATH.iterdir())
 
-        rows = view_driver.find_elements(By.XPATH, "//div[contains(@class, 'ardbnAttachmentPool')]//table[@class='BaseTable']//tr")
+        rows = view_driver.find_elements(By.XPATH, "//div[contains(@class, 'ardbnReferenceDocumentsPool')]//table[@class='BaseTable']//tr")
         # Fallback to alternative attachment table
         if len(rows) < 2 or not rows[1].find_element(By.XPATH, ".//td[1]/nobr/span").text.strip():
             rows = view_driver.find_elements(By.XPATH, "//div[contains(@class, 'ardbnECFAttPool')]//table[@class='BaseTable']//tr")
@@ -149,7 +149,7 @@ def get_textarea_value(cr_value):
                 if not filename:
                     break
                 ActionChains(view_driver).click(row).perform()
-                save_btn = view_driver.find_element(By.XPATH, "//a[text()='Save']")
+                save_btn = view_driver.find_element(By.XPATH, "//a[text()='Display']")
                 save_btn.click()
                 time.sleep(3)
             except Exception as e:
